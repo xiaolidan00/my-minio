@@ -11,21 +11,31 @@ theme: fancy
 
 官方下载地址：[https://min.io/download]
 
-window 的这里=》：https://dl.min.io/server/minio/release/windows-amd64/minio.exe
+- window 的这里=》：https://dl.min.io/server/minio/release/windows-amd64/minio.exe
+- Linux 的这里=》：
+
+```bash
+# 下载minio到主文件夹
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+# 将minio设置为可执行权限
+chmod +x minio
+```
 
 ## 2. 启动 MinIO 服务
 
-cmd 中执行命令
+### window:
+
+我的文件目录是这样的，可以参考一下
+
+![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/921ca7c2d62142b0ab507edc8cb5f812~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=270&h=159&s=5484&e=png&b=fefefe)
+
+- cmd 中执行命令
 
 ```bash
 minio.exe server D:\code\my-minio\minio-data --console-address ":9001"
 ```
 
 **注意：** D:\code\my-minio\minio-data 替换成你的 minio 数据的文件夹
-
-我的文件目录是这样的，可以参考一下
-
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/921ca7c2d62142b0ab507edc8cb5f812~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=270&h=159&s=5484&e=png&b=fefefe)
 
 - 然后你会看到这样的启动信息
 
@@ -38,11 +48,28 @@ minio.exe server D:\code\my-minio\minio-data --console-address ":9001"
 - RootUser: minioadmin
 - RootPass: minioadmin
 
-开搞，打开控制台地址，输入账号密码：minioadmin，进入管理页面
+- 开搞，打开控制台地址，输入账号密码：minioadmin，进入管理页面
 
 ![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3068fbe0f6be48a9b1fdab59ff3c38b2~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1920&h=919&s=890130&e=png&b=020c25)
 
 ![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/04d90a2d5e084e2893d7f6e0fcbb6133~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1920&h=919&s=235707&e=png&b=ffffff)
+
+### Linux(centos 7)
+
+- 在主文件夹目录创建一个 minio-data 文件夹
+
+![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/470d2a90edab47f382c67b1e5a13266f~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=677&h=364&s=32759&e=png&b=f6f3f1)
+
+- 终端执行 cd 命令切换到当前目录下，然后执行下面的命令
+
+```bash
+#MINIO_ROOT_USER=控制台登录用户名  MINIO_ROOT_PASSWORD=控制台登录密码 ./minio（执行程序地址）  server  ./minio-data（minio数据存储地址）  --console-address ":9001"（控制台启动端口）
+MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password ./minio server ./minio-data --console-address ":9001"
+```
+
+![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2872f6ea2ab644acb72ba47f1bdbf086~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1196&h=437&s=78293&e=png&b=ffffff)
+
+后面的操作跟 window 一致啦~
 
 ## 3. 创建 Access Keys
 
@@ -151,6 +178,8 @@ function uploadFile(bucketName, fileName, file, type) {
 
 ![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1a7e46a4354b43cdb2d925484be50aab~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1920&h=919&s=289481&e=png&b=fefefe)
 
+- 如果没有开启历史版本，文件上传到同一个地址会覆盖掉旧的。
+
 **开启对象历史版本**
 
 - 打开文件夹配置，然后编辑 Current Status，将弹框的 Versioning Status 勾选可用，然后就可以了
@@ -226,6 +255,7 @@ function getFile(bucketName, fileName, filePath, versionId) {
         if (err) {
           return reject(err);
         }
+        console.log('getFile ok');
         resolve();
       }
     );
@@ -249,6 +279,7 @@ function removeFile(bucketName, fileName, versionId) {
           reject(err);
           return;
         }
+        console.log('removeFile ok');
         resolve();
       });
   });
@@ -291,6 +322,7 @@ function removeAllFile(bucketName, fileName) {
         if (e) {
           return reject(e);
         }
+        console.log('removeAllFile ok');
         resolve();
       });
     });
@@ -300,6 +332,25 @@ function removeAllFile(bucketName, fileName) {
     });
   });
 }
+```
+
+## 7.使用
+
+```js
+const MinioUtil = require('./index.js');
+const minioConfig = require('./credentials.json');
+const file = './images/test.png'; //上传文件地址
+const bucketName = 'resources';
+const fileName = 'image-test.png'; //上传后的文件名
+const filePath = './test11.png'; //下载文件地址
+(async function () {
+  await MinioUtil.initMinio('127.0.0.1', 9000, false, minioConfig.accessKey, minioConfig.secretKey);
+  //   console.log(await MinioUtil.uploadFile(bucketName, fileName, file, 'image/png'));//上传
+  //   console.log(await MinioUtil.getTempUrl(bucketName, fileName, 10));//临时访问
+  //   await MinioUtil.getFile(bucketName, fileName, filePath);//下载
+  //   await MinioUtil.removeFile(bucketName, fileName);//删除单个
+  //   await MinioUtil.removeAllFile(bucketName, fileName);//删除该文本全部历史版本
+})();
 ```
 
 # 总结
